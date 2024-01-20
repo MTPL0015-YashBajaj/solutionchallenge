@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Photo Upload and Capture</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        #container {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        h1 {
+            color: #333;
+        }
+
+        #uploadInput {
+            display: none;
+        }
+
+        #captureContainer {
+            display: none;
+            margin-top: 20px;
+        }
+
+        #preview {
+            max-width: 100%;
+            height: auto;
+            margin-top: 20px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        button {
+            background-color: #4caf50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+            font-size: 16px;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        video {
+            width: 100%;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="container">
+        <h1>Photo Upload and Capture</h1>
+        <input type="file" accept="image/*" id="uploadInput" onchange="previewImage()">
+        <button onclick="capturePhoto()">Capture Photo</button>
+        <div id="captureContainer">
+            <video id="captureVideo" autoplay></video>
+            <button onclick="acceptPhoto()">Accept</button>
+            <button onclick="retakePhoto()">Retake</button>
+        </div>
+        <br>
+        <img id="preview" alt="Preview will be shown here">
+    </div>
+
+    <script>
+        let capturedStream;
+
+        function previewImage() {
+            const input = document.getElementById('uploadInput');
+            const preview = document.getElementById('preview');
+            const captureContainer = document.getElementById('captureContainer');
+
+            if (input.files.length > 0) {
+                const file = input.files[0];
+
+                const reader = new FileReader();
+
+                reader.onload = function (e) {
+                    preview.src = e.target.result;
+                };
+
+                reader.readAsDataURL(file);
+
+   
+                captureContainer.style.display = 'none';
+            } else {
+                preview.src = '';
+            }
+        }
+
+        async function capturePhoto() {
+            try {
+                const uploadInput = document.getElementById('uploadInput');
+                const captureContainer = document.getElementById('captureContainer');
+                const preview = document.getElementById('preview');
+                const captureVideo = document.getElementById('captureVideo');
+
+
+                preview.src = '';
+
+       
+                uploadInput.style.display = 'none';
+
+  
+                captureContainer.style.display = 'block';
+
+        
+                capturedStream = await navigator.mediaDevices.getUserMedia({ video: true });
+
+      
+                captureVideo.srcObject = capturedStream;
+
+ 
+                captureVideo.onloadedmetadata = function () {
+                    captureVideo.play();
+                };
+            } catch (error) {
+                console.error('Error accessing camera:', error);
+            }
+        }
+
+        function acceptPhoto() {
+            const captureContainer = document.getElementById('captureContainer');
+            const preview = document.getElementById('preview');
+            const captureVideo = document.getElementById('captureVideo');
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d');
+
+     
+            canvas.width = captureVideo.videoWidth;
+            canvas.height = captureVideo.videoHeight;
+
+        
+            context.drawImage(captureVideo, 0, 0, canvas.width, canvas.height);
+
+
+            capturedStream.getTracks().forEach(track => track.stop());
+
+   
+            captureContainer.style.display = 'none';
+
+
+            preview.src = canvas.toDataURL('image/png');
+
+        
+            document.getElementById('uploadInput').style.display = 'block';
+        }
+
+        function retakePhoto() {
+            const captureContainer = document.getElementById('captureContainer');
+
+
+            capturedStream.getTracks().forEach(track => track.stop());
+
+   
+            captureContainer.style.display = 'none';
+
+            document.getElementById('uploadInput').style.display = 'block';
+        }
+    </script>
+
+</body>
+
+</html>
